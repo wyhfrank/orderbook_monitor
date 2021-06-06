@@ -201,7 +201,7 @@ class BITPoint(ExchangeBase):
 
 class Quoine(ExchangeBase):
     name = 'quoine'
-    url = 'https://api.liquid.com//products/{0}/price_levels'
+    url = 'https://api.liquid.com/products/{0}/price_levels'
 
     @classmethod
     def parse_orderbook(cls, data):
