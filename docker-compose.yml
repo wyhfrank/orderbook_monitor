@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+    runner:
+        image: orderbook_monitor
+        container_name: orderbook_monitor
+        build: .
+        volumes: 
+            - .:/work
+        command: python main.py
