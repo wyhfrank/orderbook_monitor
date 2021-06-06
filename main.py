@@ -37,7 +37,7 @@ async def runner():
                     tasks.append(asyncio.ensure_future(e.get_latest_orderbook(session=session, timestamp=timestamp)))
 
                 records = await asyncio.gather(*tasks)
-                records = filter(lambda x: x is not None, records)
+                records = list(filter(lambda x: x is not None, records))
                 for record in records:
                     print(record)
                 db.insert_records(records=records)
