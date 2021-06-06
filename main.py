@@ -7,7 +7,8 @@ from dbmanager import DBManager
 
 
 def construct_exchanges():
-    symbols = ["btc_jpy"]
+    symbols = ["ltc_jpy"]
+    # symbols = ["btc_jpy", "eth_jpy", "xrp_jpy", "ltc"]
     exchange_list = [Bitbank, Decurrent, GMOCoin, Bitflyer, Coincheck]
 
     exchanges = []
@@ -36,6 +37,7 @@ async def runner():
                     tasks.append(asyncio.ensure_future(e.get_latest_orderbook(session=session, timestamp=timestamp)))
 
                 records = await asyncio.gather(*tasks)
+                records = filter(lambda x: x is not None, records)
                 for record in records:
                     print(record)
                 db.insert_records(records=records)
@@ -43,8 +45,6 @@ async def runner():
                 time.sleep(1)
         except KeyboardInterrupt:
             print("Interruped...")
-            # return
-            pass
     db.close()
 
 def main():

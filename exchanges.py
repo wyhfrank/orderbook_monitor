@@ -33,11 +33,15 @@ class ExchangeBase:
 
     async def get_latest_orderbook(self, session, timestamp=None):
         data = await self._send_request(session=session)
-        res = self.parse_orderbook(data)
-        if timestamp:
-            res['timestamp'] = timestamp
-        res['exchange'] = self.name
-        res['symbol'] = self.symbol
+        try:
+            res = self.parse_orderbook(data)
+        except (TypeError, KeyError):
+            res = None
+        if isinstance(res, dict):
+            if timestamp:
+                res['timestamp'] = timestamp
+            res['exchange'] = self.name
+            res['symbol'] = self.symbol
         return res
 
 
@@ -53,11 +57,8 @@ class Decurrent(ExchangeBase):
 
     @classmethod
     def parse_orderbook(cls, data):
-        try:
-            best_ask = data["bestAsk"]
-            best_bid = data["bestBid"]
-        except KeyError:
-            best_ask = best_bid = None
+        best_ask = data["bestAsk"]
+        best_bid = data["bestBid"]
         
         res = {
             "best_ask": best_ask,
@@ -124,17 +125,13 @@ class Bitflyer(ExchangeBase):
 
     @classmethod
     def parse_orderbook(cls, data):
-        best_ask = best_bid = None
-        try:
-            asks = data["asks"][:cls.top_n]
-            bids = data["bids"][:cls.top_n]
+        asks = data["asks"][:cls.top_n]
+        bids = data["bids"][:cls.top_n]
 
-            best_ask = asks[0]["price"] if len(asks) > 0 else None
-            best_bid = bids[0]["price"] if len(bids) > 0 else None
-            best_ask = float(best_ask)
-            best_bid = float(best_bid)
-        except KeyError:
-            pass
+        best_ask = asks[0]["price"] if len(asks) > 0 else None
+        best_bid = bids[0]["price"] if len(bids) > 0 else None
+        best_ask = float(best_ask)
+        best_bid = float(best_bid)
 
         res = {
             "best_ask": best_ask,
