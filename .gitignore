@@ -1,2 +1,3 @@
 db/history.db
+db/price_diff.csv
 __pycache__
