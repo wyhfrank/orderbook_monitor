@@ -48,6 +48,9 @@ class ExchangeBase:
 class Decurrent(ExchangeBase):
     name = 'decurrent'
     url = 'https://api-trade.decurret.com/api/v1/orderbook?symbolId={0}'
+
+    # These four are the only supported symbols
+    # Check here: https://api-trade.decurret.com/api/v1/symbol
     symbol_map = {
         "btc_jpy": 1,
         "eth_btc": 2,
@@ -100,18 +103,12 @@ class GMOCoin(ExchangeBase):
 
     @classmethod
     def parse_orderbook(cls, data):
-        best_ask = best_bid = None
-        if data["status"] == 0:
-            asks = data["data"]["asks"][:cls.top_n]
-            bids = data["data"]["bids"][:cls.top_n]
-
-            # asks = list(map(int, asks))
-            # bids = list(map(int, bids))
-
-            best_ask = asks[0]["price"] if len(asks) > 0 else None
-            best_bid = bids[0]["price"] if len(bids) > 0 else None
-            best_ask = float(best_ask)
-            best_bid = float(best_bid)
+        asks = data["data"]["asks"][:cls.top_n]
+        bids = data["data"]["bids"][:cls.top_n]
+        best_ask = asks[0]["price"] if len(asks) > 0 else None
+        best_bid = bids[0]["price"] if len(bids) > 0 else None
+        best_ask = float(best_ask)
+        best_bid = float(best_bid)
 
         res = {
             "best_ask": best_ask,
