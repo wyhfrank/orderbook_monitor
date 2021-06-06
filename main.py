@@ -31,8 +31,17 @@ def construct_exchanges():
         # "bat_jpy",
         # "bat_btc",
     # ]
+    # symbols = ["btc_jpy"]    
 
-    exchange_list = [Bitbank, Decurrent, GMOCoin, Bitflyer, Coincheck]
+    exchange_list = [
+        Bitbank, 
+        Decurrent, 
+        GMOCoin, 
+        Bitflyer, 
+        Coincheck, 
+        BITPoint, 
+        Quoine,
+        ]
 
     exchanges = []
     for s in symbols:

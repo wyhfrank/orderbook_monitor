@@ -1,4 +1,6 @@
 
+import aiohttp
+
 
 class ExchangeBase:
     name = ''
@@ -7,6 +9,7 @@ class ExchangeBase:
     symbol_map = None
 
     def __init__(self, symbol='btc_jpy') -> None:
+        self.initialize()
         self.symbol = symbol
         self.formatted_symbol = self.format_symbol(symbol)
     
@@ -32,10 +35,15 @@ class ExchangeBase:
         raise NotImplementedError()
 
     async def get_latest_orderbook(self, session, timestamp=None):
-        data = await self._send_request(session=session)
+        try:
+            data = await self._send_request(session=session)
+        except aiohttp.ClientConnectionError:
+            print("Cannot connect to {}".format(self.get_url()))
+            return None
         try:
             res = self.parse_orderbook(data)
         except (TypeError, KeyError):
+            print("Cannot parse data: [{}] [{}]".format(self.name, self.symbol))
             res = None
         if isinstance(res, dict):
             if timestamp:
@@ -43,6 +51,10 @@ class ExchangeBase:
             res['exchange'] = self.name
             res['symbol'] = self.symbol
         return res
+    
+    @classmethod
+    def initialize(cls):
+        return
 
 
 class Decurrent(ExchangeBase):
@@ -143,17 +155,13 @@ class Coincheck(ExchangeBase):
 
     @classmethod
     def parse_orderbook(cls, data):
-        best_ask = best_bid = None
-        try:
-            asks = data["asks"][:cls.top_n]
-            bids = data["bids"][:cls.top_n]
+        asks = data["asks"][:cls.top_n]
+        bids = data["bids"][:cls.top_n]
 
-            best_ask = asks[0][0] if len(asks) > 0 else None
-            best_bid = bids[0][0] if len(bids) > 0 else None
-            best_ask = float(best_ask)
-            best_bid = float(best_bid)
-        except KeyError:
-            pass
+        best_ask = asks[0][0] if len(asks) > 0 else None
+        best_bid = bids[0][0] if len(bids) > 0 else None
+        best_ask = float(best_ask)
+        best_bid = float(best_bid)
 
         res = {
             "best_ask": best_ask,
@@ -161,3 +169,81 @@ class Coincheck(ExchangeBase):
         }            
         return res
 
+
+class BITPoint(ExchangeBase):
+    name = 'bitpoint'
+    url = 'https://smartapi.bitpoint.co.jp/bpj-smart-api/api/depth?symbol={0}'
+
+    @classmethod
+    def symbol_map(cls, symbol: str):
+        return str.upper(symbol.replace("_",""))
+
+    @classmethod
+    def parse_orderbook(cls, data):
+        asks = data["asks"][:cls.top_n]
+        bids = data["bids"][:cls.top_n]
+
+        best_ask = asks[0]["price"] if len(asks) > 0 else None
+        best_bid = bids[0]["price"] if len(bids) > 0 else None
+        best_ask = float(best_ask)
+        best_bid = float(best_bid)
+
+        res = {
+            "best_ask": best_ask,
+            "best_bid": best_bid,
+        }            
+        return res
+
+
+class Quoine(ExchangeBase):
+    name = 'quoine'
+    url = 'https://api.liquid.com//products/{0}/price_levels'
+
+    @classmethod
+    def parse_orderbook(cls, data):
+        asks = data["sell_price_levels"][:cls.top_n]
+        bids = data["buy_price_levels"][:cls.top_n]
+
+        best_ask = asks[0][0] if len(asks) > 0 else None
+        best_bid = bids[0][0] if len(bids) > 0 else None
+        best_ask = float(best_ask)
+        best_bid = float(best_bid)
+
+        res = {
+            "best_ask": best_ask,
+            "best_bid": best_bid,
+        }            
+        return res
+    
+    @classmethod
+    def load_symbol_map(cls):
+        print("loading symbol map for " + cls.__name__)
+        import requests
+        url_products = 'https://api.liquid.com/products'
+
+        res = requests.get(url=url_products).json()
+
+        symbol_map = {}
+        for record in res:
+            id = record["id"]
+            currency = record["currency"]
+            base_currency = record["base_currency"]
+
+            symbol = str.lower("{}_{}".format(base_currency, currency))
+            symbol_map[symbol] = id
+        # print(symbol_map)
+        cls.symbol_map = symbol_map
+
+    @classmethod
+    def initialize(cls):
+        if not cls.symbol_map:
+            cls.load_symbol_map()
+
+
+def get_quoine_products():
+    Quoine.load_symbol_map()
+
+
+if __name__ == "__main__":
+    # get_quoine_products()
+    pass
