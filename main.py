@@ -5,6 +5,7 @@ import aiohttp
 from exchanges import *
 from dbmanager import DBManager
 
+__version__ = "0.0.1"
 
 def construct_exchanges():
 
@@ -80,6 +81,7 @@ async def runner():
     db.close()
 
 def main():
+    print("Version: {}".format(__version__))
     asyncio.run(runner())
     
 
