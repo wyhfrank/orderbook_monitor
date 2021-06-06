@@ -1,0 +1,8 @@
+.vscode
+tutorials
+Pipfile
+Pipfile.lock
+.git
+.gitignore
+__pycache__
+db
