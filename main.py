@@ -7,6 +7,7 @@ from dbmanager import DBManager
 
 __version__ = "0.0.1"
 
+
 def construct_exchanges():
 
     symbols = [
@@ -80,9 +81,11 @@ async def runner():
             print("Interruped...")
     db.close()
 
+
 def main():
     print("Version: {}".format(__version__))
     asyncio.run(runner())
     
 
-main()
+if __name__ == "__main__":
+    main()
