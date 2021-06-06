@@ -7,8 +7,31 @@ from dbmanager import DBManager
 
 
 def construct_exchanges():
-    symbols = ["ltc_jpy"]
-    # symbols = ["btc_jpy", "eth_jpy", "xrp_jpy", "ltc"]
+
+    symbols = [
+        "btc_jpy", 
+        "eth_jpy", 
+        "xrp_jpy", 
+        "ltc_jpy",
+        "eth_btc",
+        "mona_jpy",
+        "xlm_jpy",
+        ]
+
+    # These symbols are only supported by bitbank:
+    # symbols = [
+        # "xrp_btc",
+        # "ltc_btc",
+        # "mona_btc",
+        # "bcc_jpy",
+        # "bcc_btc",
+        # "xlm_btc",
+        # "qtum_jpy",
+        # "qtum_btc",
+        # "bat_jpy",
+        # "bat_btc",
+    # ]
+
     exchange_list = [Bitbank, Decurrent, GMOCoin, Bitflyer, Coincheck]
 
     exchanges = []
