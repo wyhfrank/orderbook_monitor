@@ -40,6 +40,10 @@ class ExchangeBase:
         except aiohttp.ClientConnectionError:
             print("Cannot connect to {}".format(self.get_url()))
             return None
+        except aiohttp.ContentTypeError:
+            print("Cannot parse content from {}".format(self.get_url()))
+            return None
+
         try:
             res = self.parse_orderbook(data)
         except (TypeError, KeyError):
