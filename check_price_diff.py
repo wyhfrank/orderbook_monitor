@@ -1,7 +1,8 @@
+import time
+import datetime
 import numpy as np
 from dbmanager import DBManager
 import pandas as pd
-import datetime
 from version import print_version
 
 
@@ -26,6 +27,8 @@ def check_diff(show_top=20):
 
     # TODO: this iteration is too costy, find a faster way
     print("Iterating thru each group...")
+    start_time = time.time()
+
     for i, (name, group) in enumerate(grouped):
         if len(group) < 2:
             continue
@@ -42,7 +45,8 @@ def check_diff(show_top=20):
 
         df_res = df_res.append(group)
 
-    print("Finished iterating.")
+    elapsed_seconds = time.time() - start_time
+    print(f"Finished iterating with {elapsed_seconds:.1f}s ({elapsed_seconds / 60:.1f}m).")
 
     df_res = df_res[df_res["price_diff"] > 0]
 
