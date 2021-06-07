@@ -1,5 +1,6 @@
-
+import asyncio
 import aiohttp
+import aiohttp.client_exceptions
 
 
 class ExchangeBase:
@@ -37,10 +38,10 @@ class ExchangeBase:
     async def get_latest_orderbook(self, session, timestamp=None):
         try:
             data = await self._send_request(session=session)
-        except aiohttp.ClientConnectionError:
+        except (aiohttp.ClientConnectionError, asyncio.exceptions.TimeoutError):
             print("Cannot connect to {}".format(self.get_url()))
             return None
-        except aiohttp.ContentTypeError:
+        except (aiohttp.ContentTypeError, aiohttp.client_exceptions.ClientPayloadError):
             print("Cannot parse content from {}".format(self.get_url()))
             return None
 
