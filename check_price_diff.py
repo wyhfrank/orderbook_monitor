@@ -26,6 +26,9 @@ def check_diff(show_top=20):
     df_res = pd.DataFrame()
 
     # TODO: this iteration is too costy, find a faster way
+    # https://www.yiibai.com/pandas/python_pandas_groupby.html
+    # https://towardsdatascience.com/all-pandas-groupby-you-should-know-for-grouping-data-and-performing-operations-2a8ec1327b5
+
     print("Iterating thru each group...")
     start_time = time.time()
 
