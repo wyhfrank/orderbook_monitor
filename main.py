@@ -71,12 +71,19 @@ async def runner():
                     records = await asyncio.gather(*tasks)
                     records = list(filter(lambda x: x is not None, records))
                     for record in records:
-                        print(record)
+                        log_record(record)
                     db.insert_records(records=records)
                     
                     time.sleep(1)
             except KeyboardInterrupt:
                 print("Interruped...")
+
+
+def log_record(record):
+    print("Syb[{}]\tEx[{}]\tAsk1[{:.1f}]\tBid1[{:.1f}]\tTime[{}]".format(
+        record['symbol'], record['exchange'], record['best_ask'], 
+        record['best_bid'], record['timestamp'], 
+    ))
 
 
 def main():

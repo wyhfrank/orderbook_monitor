@@ -84,8 +84,8 @@ class ParseLayerBase(ExchangeBase):
             raise TypeError("Depth data length is 0.")
         best_ask = asks[0]['price']
         best_bid = bids[0]['price']
-        # best_ask = float(best_ask)
-        # best_bid = float(best_bid)
+        best_ask = float(best_ask)
+        best_bid = float(best_bid)
 
         res = {
             "best_ask": best_ask,
