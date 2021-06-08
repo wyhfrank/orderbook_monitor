@@ -18,3 +18,8 @@ check_db:
 
 price_diff:
 	docker-compose run runner python check_price_diff.py
+
+recover_db:
+	cd db && mv history.db history.bk.db && \
+	sqlite3 history.bk.db ".recover" | sqlite3 history.db && \
+	sqlite3 history.db "pragma integrity_check"
