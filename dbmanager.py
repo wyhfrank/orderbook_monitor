@@ -5,12 +5,19 @@ class DBManager:
     def __init__(self, file='history.db', db_path='.') -> None:
         self.conn = None
         self.file = os.path.join(db_path, file)
+    
+    def __enter__(self):
+        self.connect()
+        return self
+    
+    def __exit__(self, type, value, trace):
+        self.close()
 
     def connect(self):
         self.conn = sqlite3.connect(self.file)
         print("Opened database successfully")
 
-    def create_db(self):
+    def create_tables_safe(self):
         c = self.conn.cursor()
         sql_orderbook = '''CREATE TABLE IF NOT EXISTS orderbook
             (id INTEGER PRIMARY KEY     AUTOINCREMENT,
@@ -82,7 +89,7 @@ class DBManager:
 def test_db():
     db = DBManager()
     db.connect()
-    db.create_db()
+    db.create_tables_safe()
 
     records = [
         {
