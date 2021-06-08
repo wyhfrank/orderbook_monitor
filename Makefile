@@ -14,7 +14,8 @@ shell:
 	docker-compose run runner /bin/bash
 
 check_db:
-	sqlite3 db/history.db "select * from orderbook order by timestamp desc limit 10;"
+	sqlite3 db/history.db "select * from orderbook, depth \
+	where depth.orderbook_id==orderbook.id order by timestamp desc limit 20;"
 
 price_diff:
 	docker-compose run runner python check_price_diff.py

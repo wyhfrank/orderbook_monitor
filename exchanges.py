@@ -6,7 +6,7 @@ import aiohttp.client_exceptions
 class ExchangeBase:
     name = ''
     url = ''
-    top_n = 3
+    top_n = 10
     symbol_map = None
 
     def __init__(self, symbol='btc_jpy') -> None:
@@ -62,7 +62,62 @@ class ExchangeBase:
         return
 
 
-class Decurrent(ExchangeBase):
+class ParseLayerBase(ExchangeBase):
+    """An example of parsing the data using list position or dictionary key
+    """
+    ask_key = "asks"
+    bid_key = "bids"
+    price_pos = "price"   # or a number for list type
+    amount_pos = "amount" # or a number for list type
+    
+    @classmethod
+    def preprocess_data(cls, data):
+        return data
+
+    @classmethod
+    def parse_orderbook(cls, data):
+        data = cls.preprocess_data(data)
+
+        asks = cls.parse_depth(data[cls.ask_key][:cls.top_n])
+        bids = cls.parse_depth(data[cls.bid_key][:cls.top_n])
+        if len(asks) < 1 or len(bids) < 1:
+            raise TypeError("Depth data length is 0.")
+        best_ask = asks[0]['price']
+        best_bid = bids[0]['price']
+        # best_ask = float(best_ask)
+        # best_bid = float(best_bid)
+
+        res = {
+            "best_ask": best_ask,
+            "best_bid": best_bid,
+            "depth": {
+                "ask": asks,
+                "bid": bids,
+            }
+        }            
+        return res
+
+    @classmethod
+    def parse_depth(cls, depth_records):
+        return [
+            {'price': record[cls.price_pos], 
+            'amount': record[cls.amount_pos]} 
+            for record in depth_records
+        ]
+
+
+class Bitbank(ParseLayerBase):
+    name = 'bitbank'
+    url = 'https://public.bitbank.cc/{0}/depth'
+    price_pos = 0
+    amount_pos = 1
+    
+    @classmethod
+    def preprocess_data(cls, data):
+        return data["data"]
+
+
+class Decurrent(ParseLayerBase):
     name = 'decurrent'
     url = 'https://api-trade.decurret.com/api/v1/orderbook?symbolId={0}'
 
@@ -75,150 +130,54 @@ class Decurrent(ExchangeBase):
         "xrp_jpy": 8,
     }
 
-    @classmethod
-    def parse_orderbook(cls, data):
-        best_ask = data["bestAsk"]
-        best_bid = data["bestBid"]
-        
-        res = {
-            "best_ask": best_ask,
-            "best_bid": best_bid,
-        }
-        return res
 
-
-class Bitbank(ExchangeBase):
-    name = 'bitbank'
-    url = 'https://public.bitbank.cc/{0}/depth'
-
-    @classmethod
-    def parse_orderbook(cls, data):
-        best_ask = best_bid = None
-        if data["success"] == 1:
-            asks = data["data"]["asks"][:cls.top_n]
-            bids = data["data"]["bids"][:cls.top_n]
-
-            # asks = list(map(int, asks))
-            # bids = list(map(int, bids))
-
-            best_ask = asks[0][0] if len(asks) > 0 else None
-            best_bid = bids[0][0] if len(bids) > 0 else None
-            best_ask = float(best_ask)
-            best_bid = float(best_bid)
-
-        res = {
-            "best_ask": best_ask,
-            "best_bid": best_bid,
-        }            
-        return res
-
-
-class GMOCoin(ExchangeBase):
+class GMOCoin(ParseLayerBase):
     name = 'gmocoin'
     url = 'https://api.coin.z.com/public/v1/orderbooks?symbol={0}'
     symbol_map = str.upper
 
+    amount_pos = "size"
+
     @classmethod
-    def parse_orderbook(cls, data):
-        asks = data["data"]["asks"][:cls.top_n]
-        bids = data["data"]["bids"][:cls.top_n]
-        best_ask = asks[0]["price"] if len(asks) > 0 else None
-        best_bid = bids[0]["price"] if len(bids) > 0 else None
-        best_ask = float(best_ask)
-        best_bid = float(best_bid)
+    def preprocess_data(cls, data):
+        return data["data"]
 
-        res = {
-            "best_ask": best_ask,
-            "best_bid": best_bid,
-        }            
-        return res
 
-class Bitflyer(ExchangeBase):
+class Bitflyer(ParseLayerBase):
     name = 'bitflyer'
     url = 'https://api.bitflyer.com/v1/board?product_code={0}'
 
-    @classmethod
-    def parse_orderbook(cls, data):
-        asks = data["asks"][:cls.top_n]
-        bids = data["bids"][:cls.top_n]
-
-        best_ask = asks[0]["price"] if len(asks) > 0 else None
-        best_bid = bids[0]["price"] if len(bids) > 0 else None
-        best_ask = float(best_ask)
-        best_bid = float(best_bid)
-
-        res = {
-            "best_ask": best_ask,
-            "best_bid": best_bid,
-        }            
-        return res
+    amount_pos = "size"
 
 
-class Coincheck(ExchangeBase):
+class Coincheck(ParseLayerBase):
     name = 'coincheck'
     url = 'https://coincheck.com/api/order_books?pair={0}'
 
-    @classmethod
-    def parse_orderbook(cls, data):
-        asks = data["asks"][:cls.top_n]
-        bids = data["bids"][:cls.top_n]
-
-        best_ask = asks[0][0] if len(asks) > 0 else None
-        best_bid = bids[0][0] if len(bids) > 0 else None
-        best_ask = float(best_ask)
-        best_bid = float(best_bid)
-
-        res = {
-            "best_ask": best_ask,
-            "best_bid": best_bid,
-        }            
-        return res
+    price_pos = 0
+    amount_pos = 1
 
 
-class BITPoint(ExchangeBase):
+class BITPoint(ParseLayerBase):
     name = 'bitpoint'
     url = 'https://smartapi.bitpoint.co.jp/bpj-smart-api/api/depth?symbol={0}'
+
+    price_pos = 'price'
+    amount_pos = 'qty'
 
     @classmethod
     def symbol_map(cls, symbol: str):
         return str.upper(symbol.replace("_",""))
 
-    @classmethod
-    def parse_orderbook(cls, data):
-        asks = data["asks"][:cls.top_n]
-        bids = data["bids"][:cls.top_n]
 
-        best_ask = asks[0]["price"] if len(asks) > 0 else None
-        best_bid = bids[0]["price"] if len(bids) > 0 else None
-        best_ask = float(best_ask)
-        best_bid = float(best_bid)
-
-        res = {
-            "best_ask": best_ask,
-            "best_bid": best_bid,
-        }            
-        return res
-
-
-class Quoine(ExchangeBase):
+class Quoine(ParseLayerBase):
     name = 'quoine'
     url = 'https://api.liquid.com/products/{0}/price_levels'
-
-    @classmethod
-    def parse_orderbook(cls, data):
-        asks = data["sell_price_levels"][:cls.top_n]
-        bids = data["buy_price_levels"][:cls.top_n]
-
-        best_ask = asks[0][0] if len(asks) > 0 else None
-        best_bid = bids[0][0] if len(bids) > 0 else None
-        best_ask = float(best_ask)
-        best_bid = float(best_bid)
-
-        res = {
-            "best_ask": best_ask,
-            "best_bid": best_bid,
-        }            
-        return res
+    
+    ask_key = 'sell_price_levels'
+    bid_key = 'buy_price_levels'
+    price_pos = 0
+    amount_pos = 1
     
     @classmethod
     def load_symbol_map(cls):
@@ -249,6 +208,19 @@ def get_quoine_products():
     Quoine.load_symbol_map()
 
 
+def single_test():
+
+    async def runner():
+
+        # e = Bitbank()
+        e = Quoine()
+        async with aiohttp.ClientSession() as session:
+            res = await e.get_latest_orderbook(session=session)
+            print(res)
+
+    asyncio.run(runner())
+
 if __name__ == "__main__":
     # get_quoine_products()
+    single_test()
     pass
