@@ -9,11 +9,13 @@ class ExchangeBase:
     url = ''
     top_n = 10
     symbol_map = None
+    retry_count_down = 10  # Retry after N times
 
     def __init__(self, symbol='btc_jpy') -> None:
         self.initialize()
         self.symbol = symbol
         self.formatted_symbol = self.format_symbol(symbol)
+        self.retry_counter = 0
     
     def get_url(self):
         return self.url.format(self.formatted_symbol)
@@ -37,20 +39,27 @@ class ExchangeBase:
         raise NotImplementedError()
 
     async def get_latest_orderbook(self, session, timestamp=None):
+        if not self.retry_status_ok():
+            print("Skip: [{}] [{}]. Retry after {} times.".format(self.name, self.symbol, self.retry_counter))
+            return None
+
         try:
             data = await self._send_request(session=session)
         except (aiohttp.ClientConnectionError, asyncio.exceptions.TimeoutError):
             print("Cannot connect to {}".format(self.get_url()))
+            self.setup_retry()
             return None
         except (aiohttp.ContentTypeError, aiohttp.client_exceptions.ClientPayloadError):
             print("Cannot parse content from {}".format(self.get_url()))
+            self.setup_retry()
             return None
 
         try:
             res = self.parse_orderbook(data)
         except (TypeError, KeyError):
             print("Cannot parse data: [{}] [{}], url: {}".format(self.name, self.symbol, self.get_url()))
-            res = None
+            self.setup_retry()
+            return None
         if isinstance(res, dict):
             if timestamp:
                 res['timestamp'] = timestamp
@@ -61,6 +70,15 @@ class ExchangeBase:
     @classmethod
     def initialize(cls):
         return
+    
+    def retry_status_ok(self):
+        if self.retry_counter > 0:
+            self.retry_counter -= 1
+            return False
+        return True
+    
+    def setup_retry(self):
+        self.retry_counter = self.retry_count_down
 
 
 class ParseLayerBase(ExchangeBase):
