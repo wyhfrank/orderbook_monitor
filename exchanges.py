@@ -1,4 +1,5 @@
 import asyncio
+import json
 import aiohttp
 import aiohttp.client_exceptions
 
@@ -185,16 +186,19 @@ class Quoine(ParseLayerBase):
         import requests
         url_products = 'https://api.liquid.com/products'
 
-        res = requests.get(url=url_products).json()
-
         symbol_map = {}
-        for record in res:
-            id = record["id"]
-            currency = record["currency"]
-            base_currency = record["base_currency"]
+        try:
+            res = requests.get(url=url_products).json()
+            for record in res:
+                id = record["id"]
+                currency = record["currency"]
+                base_currency = record["base_currency"]
 
-            symbol = str.lower("{}_{}".format(base_currency, currency))
-            symbol_map[symbol] = id
+                symbol = str.lower("{}_{}".format(base_currency, currency))
+                symbol_map[symbol] = id
+        except json.JSONDecodeError:
+            pass
+
         # print(symbol_map)
         cls.symbol_map = symbol_map
 
