@@ -74,7 +74,7 @@ async def runner():
                         log_record(record)
                     db.insert_records(records=records)
                     
-                    time.sleep(1)
+                    time.sleep(2)
             except KeyboardInterrupt:
                 print("Interruped...")
 
