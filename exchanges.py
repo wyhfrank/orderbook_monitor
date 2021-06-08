@@ -48,7 +48,7 @@ class ExchangeBase:
         try:
             res = self.parse_orderbook(data)
         except (TypeError, KeyError):
-            print("Cannot parse data: [{}] [{}]".format(self.name, self.symbol))
+            print("Cannot parse data: [{}] [{}], url: {}".format(self.name, self.symbol, self.get_url()))
             res = None
         if isinstance(res, dict):
             if timestamp:
