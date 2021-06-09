@@ -1,10 +1,9 @@
 import os
 import sqlite3
 
-class DBManager:
-    def __init__(self, file='history.db', db_path='.') -> None:
+class DBManagerBase:
+    def __init__(self) -> None:
         self.conn = None
-        self.file = os.path.join(db_path, file)
     
     def __enter__(self):
         self.connect()
@@ -14,8 +13,24 @@ class DBManager:
         self.close()
 
     def connect(self):
-        self.conn = sqlite3.connect(self.file)
+        self.conn = self.create_conn()
         print("Opened database successfully")
+    
+    def create_conn(self):
+        raise NotImplementedError
+
+    def close(self):
+        self.conn.close()
+        print("Database connection closed")        
+
+
+class SqlManager(DBManagerBase):
+    def __init__(self, file='history.db', db_path='.') -> None:
+        super().__init__()
+        self.file = os.path.join(db_path, file)
+
+    def create_conn(self):
+        return sqlite3.connect(self.file)
 
     def create_tables_safe(self):
         c = self.conn.cursor()
@@ -80,14 +95,10 @@ class DBManager:
         
         self.conn.commit()
 
-    def close(self):
-        self.conn.close()
-        print("Database connection closed")
-
 
 ###################################################
 def test_db():
-    db = DBManager()
+    db = SqlManager()
     db.connect()
     db.create_tables_safe()
 
