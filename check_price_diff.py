@@ -1,24 +1,22 @@
 import time
 import datetime
 import numpy as np
-from dbmanager import DBManager
 import pandas as pd
 from version import print_version
+from utils import get_db_manager
 
 
 def check_diff(show_top=20):
-    db_path = 'db'
-    db = DBManager(db_path=db_path)
-    db.connect()
 
-    sql = "SELECT * FROM orderbook;"
-    df = pd.read_sql_query(sql=sql, con=db.conn)
-    db.close()
+    with get_db_manager() as db:
+        sql = "SELECT * FROM orderbook;"
+        df = pd.read_sql_query(sql=sql, con=db.conn)
 
     latest = datetime.datetime.fromtimestamp(df.timestamp.max())
     print(f"Latest data obtained at: {latest}")
 
     print(df.tail())
+    return 
 
     # grouped = df.groupby(['symbol', 'timestamp'], as_index=False)
     grouped = df.groupby(['symbol', 'timestamp'], as_index=True)

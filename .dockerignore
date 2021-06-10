@@ -1,4 +1,5 @@
-.vscode
+.vscode/
+.devcontainer/
 tutorials
 Pipfile
 Pipfile.lock

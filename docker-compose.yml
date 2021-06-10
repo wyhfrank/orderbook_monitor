@@ -10,6 +10,8 @@ services:
         command: python main.py
         depends_on: 
             - db
+        environment:
+            - POSTGRES_HOST=db
 
     db:
         image: postgres:13
