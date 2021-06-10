@@ -24,3 +24,9 @@ recover_db:
 	cd db && mv history.db history.bk.db && \
 	sqlite3 history.bk.db ".recover" | sqlite3 history.db && \
 	sqlite3 history.db "pragma integrity_check"
+
+# Not working: connection error to psql database
+migrate_sqlite2psql:
+	docker-compose up -d db && \
+	docker run --rm --name pgloader dimitri/pgloader:latest \
+		pgloader ./data/sqlite_data/history.db postgresql://postgres:postgres@localhost/orderbook_db

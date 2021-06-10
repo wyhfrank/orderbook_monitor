@@ -3,7 +3,7 @@ import asyncio
 import aiohttp
 
 from exchanges import *
-from dbmanager import SqlManager
+from dbmanager import PsqlManager
 from version import print_version
 
 
@@ -54,10 +54,9 @@ def construct_exchanges():
 
 async def runner():
 
-    db_path = 'db'
     exchanges = construct_exchanges()
 
-    with SqlManager(db_path=db_path) as db:
+    with PsqlManager() as db:
         db.create_tables_safe()
 
         async with aiohttp.ClientSession() as session:

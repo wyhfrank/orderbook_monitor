@@ -8,3 +8,19 @@ services:
         volumes: 
             - .:/work
         command: python main.py
+        depends_on: 
+            - db
+
+    db:
+        image: postgres:13
+        container_name: db
+        restart: always
+        ports: 
+            - 5432:5432
+        volumes:
+            - ./data/psql_data:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_DB=orderbook_db
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+
