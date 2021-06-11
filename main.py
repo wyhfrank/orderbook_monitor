@@ -1,6 +1,7 @@
 import time
 import asyncio
 import aiohttp
+import dotenv
 
 from exchanges import *
 from version import print_version
@@ -86,6 +87,7 @@ def log_record(record):
 
 
 def main():
+    dotenv.load_dotenv()
     print_version()
     asyncio.run(runner())
     

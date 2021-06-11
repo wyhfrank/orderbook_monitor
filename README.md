@@ -1,3 +1,10 @@
+## Get started
+
+Create config file:
+
+``` sh
+cp .env.example .env
+```
 
 ### Recover from corrupted db file:
 

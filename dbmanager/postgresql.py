@@ -26,7 +26,7 @@ class PsqlManager(DBManagerBase):
     sql_insert_orderbook = "INSERT INTO orderbook ({}) VALUES ({}) RETURNING id;"
     sql_insert_depth =  "INSERT INTO depth ({}) VALUES ({}) RETURNING id;"        
 
-    def __init__(self, database="orderbook_db", user="postgres", password="postgres", host="localhost", port="5432") -> None:
+    def __init__(self, database="orderbook_db", user="postgres", password="postgres", host="localhost", port=5432) -> None:
         super().__init__()
         self.db_config = {
             "database": database,
@@ -35,6 +35,7 @@ class PsqlManager(DBManagerBase):
             "host": host,
             "port": port,
         }
+        print(f"Using [postgres]: {host}")
     
     def create_conn(self):
         return psycopg2.connect(**self.db_config)

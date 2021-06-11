@@ -7,9 +7,12 @@ name = "pypi"
 aiohttp = "*"
 requests = "*"
 psycopg2 = "*"
+mysql-connector = "*"
+python-dotenv = "*"
 
 [dev-packages]
 rope = "*"
+autopep8 = "*"
 
 [requires]
 python_version = "3.8"

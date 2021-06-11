@@ -2,10 +2,10 @@ build:
 	docker-compose build
 
 up:
-	docker-compose up
+	docker-compose up runner
 
 down:
-	docker-compose down
+	docker-compose down runner
 
 logs:
 	docker-compose logs runner

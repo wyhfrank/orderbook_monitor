@@ -1,9 +1,9 @@
 import os
 import sqlite3
 from dbmanager.base import DBManagerBase
-       
 
-class SqlManager(DBManagerBase):
+
+class SqliteManager(DBManagerBase):
     sql_create_orderbook = '''CREATE TABLE IF NOT EXISTS orderbook
         (id INTEGER PRIMARY KEY     AUTOINCREMENT,
         symbol           CHAR(20)   NOT NULL,
@@ -23,9 +23,10 @@ class SqlManager(DBManagerBase):
             ON DELETE CASCADE
         );'''
         
-    def __init__(self, file='history.db', db_path='.') -> None:
+    def __init__(self, file='history.db', path='.') -> None:
         super().__init__()
-        self.file = os.path.join(db_path, file)
+        self.file = os.path.join(path, file)
+        print(f"Using [sqlite]: {self.file}")
 
     def create_conn(self):
         return sqlite3.connect(self.file)
@@ -34,7 +35,7 @@ class SqlManager(DBManagerBase):
 
 ###################################################
 def test_db():
-    db = SqlManager()
+    db = SqliteManager()
     db.connect()
     db.create_tables_safe()
 

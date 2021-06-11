@@ -5,13 +5,13 @@ services:
         image: orderbook_monitor
         container_name: orderbook_monitor
         build: .
-        volumes: 
-            - .:/work
+        # volumes: 
+            # - .:/work
         command: python main.py
-        depends_on: 
-            - db
-        environment:
-            - POSTGRES_HOST=db
+        # depends_on: 
+            # - db
+        # environment:
+            # - POSTGRES_HOST=db
 
     db:
         image: postgres:13

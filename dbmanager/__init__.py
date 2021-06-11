@@ -1,2 +1,3 @@
-from dbmanager.sqlite import SqlManager
+from dbmanager.sqlite import SqliteManager
 from dbmanager.postgresql import PsqlManager
+from dbmanager.mysql import MysqlManager
