@@ -8,7 +8,7 @@ from utils import get_db_manager
 pickle_cache_file = 'data/tmp.pkl'
 
 
-def check_diff(group_delimiter = 60, minimun_earn_rate = 0.005, show_top=20, use_cache=True):
+def check_diff(exclued_exchange=[], group_delimiter = 60, minimun_earn_rate = 0.005, show_top=20, use_cache=True):
 
     df = load_data(use_cache)
 
@@ -17,10 +17,15 @@ def check_diff(group_delimiter = 60, minimun_earn_rate = 0.005, show_top=20, use
     # df = df[df['symbol']=='btc_jpy']
     # df = df_bk.copy()
 
+    oldest = datetime.datetime.fromtimestamp(df.timestamp.min())
     latest = datetime.datetime.fromtimestamp(df.timestamp.max())
-    print(f"Latest data obtained at: {latest}")
+    print(f"Time range: {oldest} -- {latest}")
     print(f"Number of records: {df.shape[0]:d}")
     print(df.head(5))
+
+    # Exclude exchange
+    if exclued_exchange:
+        df = df[~df['exchange'].isin(exclued_exchange)].copy()
     
     # Group by symbol and timestamp
     # https://stackoverflow.com/a/30244979/1938012
@@ -38,6 +43,8 @@ def check_diff(group_delimiter = 60, minimun_earn_rate = 0.005, show_top=20, use
 
     # Calculate the price diff and remove those without any potential profit
     df['price_diff'] = df['sell_price'] - df['buy_price']
+    # https://stackoverflow.com/a/53954986/1938012
+    # Use a copy to suppress the warning SettingWithCopyWarning
     df_diff_over_0 = df[df['price_diff'] > 0].copy()
     df_diff_over_0['diff_ratio'] = df_diff_over_0['price_diff'] / df_diff_over_0['buy_price']
 
@@ -56,12 +63,13 @@ def check_diff(group_delimiter = 60, minimun_earn_rate = 0.005, show_top=20, use
     # df_independents.sort_values(by='diff_ratio', ascending=False, inplace=True)
     
     df_engouth_earn_rate = df_independents[df_independents['diff_ratio'] >= minimun_earn_rate].copy()
-    # df_engouth_earn_rate.sort_values(by=['diff_ratio'], ascending=False, inplace=True)
+    df_engouth_earn_rate.sort_values(by=['diff_ratio'], ascending=False, inplace=True)
     
     print(df_engouth_earn_rate.head(n=show_top))
     df_engouth_earn_rate.to_csv('data/price_diff.csv', index=False)
 
     return df_engouth_earn_rate
+
 
 def load_data(use_cache=True):
     if use_cache and os.path.exists(pickle_cache_file):
@@ -76,14 +84,17 @@ def load_data(use_cache=True):
             start = time.time()
             df = pd.read_sql_query(sql=sql, con=db.conn)
             elsapsed = time.time() - start
-            print(f"Reading from db took: {elsapsed}s")
+            print(f"Reading from db took: {elsapsed:.3f}s")
             df.to_pickle(pickle_cache_file)
     return df
 
 
 def main():
     print_version()
-    check_diff()
+    use_cache=True
+    exclued_exchange = ['bitflyer']
+
+    check_diff(use_cache=use_cache, exclued_exchange=exclued_exchange)
 
 
 if __name__ == '__main__':
