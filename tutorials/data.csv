@@ -1,0 +1,13 @@
+﻿symbol,timestamp,exchange,best_bid
+btc_jpy,1,bitbank,2000
+btc_jpy,1,decurrent,2001
+btc_jpy,1,bitflyer,2002
+btc_jpy,1,coincheck,2003
+btc_jpy,2,bitbank,2005
+btc_jpy,2,decurrent,2001
+btc_jpy,2,bitflyer,2002
+btc_jpy,2,coincheck,2003
+eth_jpy,3,bitbank,2005
+eth_jpy,3,decurrent,2006
+eth_jpy,3,bitflyer,2002
+eth_jpy,3,coincheck,2003
