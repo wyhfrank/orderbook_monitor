@@ -11,7 +11,7 @@ default_output_dir = 'data/calcs'
 last_db_access_file = 'last_db_access.txt'
 
 
-def check_diff(date_range='auto', exclued_exchange=[], group_delimiter = 60, minimun_earn_rate = 0.005, show_top=20, use_cache=True):
+def calc_potential_earn(date_range='auto', exclued_exchange=[], group_delimiter = 60, minimun_earn_rate = 0.005, show_top=20, use_cache=True):
 
     df = load_data(date_range=date_range, use_cache=use_cache)
 
@@ -158,7 +158,7 @@ def main():
     use_cache=False
     exclued_exchange = ['bitflyer']
 
-    check_diff(use_cache=use_cache, exclued_exchange=exclued_exchange)
+    calc_potential_earn(use_cache=use_cache, exclued_exchange=exclued_exchange)
 
 
 if __name__ == '__main__':
