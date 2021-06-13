@@ -32,8 +32,9 @@ class ExchangeBase:
 
     async def _send_request(self, session):
         async with session.get(self.get_url()) as resp:
-            data = await resp.json()
-            return data
+            data = await resp.read()
+            json_data = json.loads(data)
+            return json_data
     
     @classmethod
     def parse_orderbook(cls, data):
@@ -50,15 +51,16 @@ class ExchangeBase:
             print("Cannot connect to {}".format(self.get_url()))
             self.setup_retry()
             return None
-        except (aiohttp.ContentTypeError, aiohttp.client_exceptions.ClientPayloadError):
+        except (aiohttp.ContentTypeError, aiohttp.client_exceptions.ClientPayloadError) as e:
             print("Cannot parse content from {}".format(self.get_url()))
             self.setup_retry()
             return None
 
         try:
             res = self.parse_orderbook(data)
-        except (TypeError, KeyError):
+        except (TypeError, KeyError) as e:
             print("Cannot parse data: [{}] [{}], url: {}".format(self.name, self.symbol, self.get_url()))
+            # print(e)
             self.setup_retry()
             return None
         if isinstance(res, dict):
@@ -90,6 +92,10 @@ class ParseLayerBase(ExchangeBase):
     price_pos = "price"   # or a number for list type
     amount_pos = "amount" # or a number for list type
     
+    # Key for the parsing output
+    price_key = "price"
+    amount_key = "amount"
+    
     @classmethod
     def preprocess_data(cls, data):
         return data
@@ -98,12 +104,15 @@ class ParseLayerBase(ExchangeBase):
     def parse_orderbook(cls, data):
         data = cls.preprocess_data(data)
 
-        asks = cls.parse_depth(data[cls.ask_key][:cls.top_n])
-        bids = cls.parse_depth(data[cls.bid_key][:cls.top_n])
+        asks = cls.parse_depth(data[cls.ask_key])
+        bids = cls.parse_depth(data[cls.bid_key])
         if len(asks) < 1 or len(bids) < 1:
             raise TypeError("Depth data length is 0.")
-        best_ask = asks[0]['price']
-        best_bid = bids[0]['price']
+
+        sorted_asks = cls.sort_price(asks, type='ask')[:cls.top_n]
+        sorted_bids = cls.sort_price(bids, type='bid')[:cls.top_n]
+        best_ask = sorted_asks[0][cls.price_key]
+        best_bid = sorted_bids[0][cls.price_key]
         best_ask = float(best_ask)
         best_bid = float(best_bid)
 
@@ -111,8 +120,8 @@ class ParseLayerBase(ExchangeBase):
             "best_ask": best_ask,
             "best_bid": best_bid,
             "depth": {
-                "ask": asks,
-                "bid": bids,
+                "ask": sorted_asks,
+                "bid": sorted_bids,
             }
         }            
         return res
@@ -120,10 +129,15 @@ class ParseLayerBase(ExchangeBase):
     @classmethod
     def parse_depth(cls, depth_records):
         return [
-            {'price': record[cls.price_pos], 
-            'amount': record[cls.amount_pos]} 
+            {cls.price_key: record[cls.price_pos], 
+            cls.amount_key: record[cls.amount_pos]} 
             for record in depth_records
         ]
+
+    @classmethod
+    def sort_price(cls, price_list, type="bid"):
+        reverse = type=="bid"
+        return sorted(price_list, key=lambda x: x[cls.price_key], reverse=reverse)
 
 
 class Bitbank(ParseLayerBase):
@@ -232,7 +246,7 @@ class Zaif(ParseLayerBase):
     url = 'https://api.zaif.jp/api/1/depth/{0}'
     price_pos = 0
     amount_pos = 1
-    
+
 
 class Huobi(ParseLayerBase):
     name = 'huobi'
@@ -249,6 +263,22 @@ class Huobi(ParseLayerBase):
         return data["tick"]
 
 
+class BtcBox(ParseLayerBase):
+    name = 'btcbox'
+    url = 'https://www.btcbox.co.jp/api/v1/depth?coin={0}'
+    price_pos = 0
+    amount_pos = 1
+
+    # Only these 4 types are supported
+    # https://blog.btcbox.jp/en/archives/8762#toc6
+    symbol_map = {
+        "btc_jpy": "btc",
+        "bch_jpy": "bch",
+        "ltc_jpy": "ltc",
+        "eth_jpy": "eth",
+    }
+
+
 def get_quoine_products():
     Quoine.load_symbol_map()
 
@@ -260,7 +290,8 @@ def single_test():
         # e = Bitbank()
         # e = Quoine()
         # e = Zaif()
-        e = Huobi()
+        # e = Huobi()
+        e = BtcBox()
         async with aiohttp.ClientSession() as session:
             res = await e.get_latest_orderbook(session=session)
             print(res)

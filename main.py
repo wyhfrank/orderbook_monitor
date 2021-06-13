@@ -45,6 +45,7 @@ def construct_exchanges():
         Quoine,
         Zaif,
         Huobi,
+        BtcBox,
         ]
 
     exchanges = []
