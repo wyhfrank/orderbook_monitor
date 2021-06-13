@@ -9,6 +9,7 @@ from utils import get_db_manager
 pickle_cache_file = 'data/tmp.pkl'
 default_output_dir = 'data/calcs'
 last_db_access_file = 'last_db_access.txt'
+timezone = 'Asia/Tokyo'
 
 
 def calc_potential_earn(date_range='auto', exclued_exchange=[], group_delimiter = 60, minimun_earn_rate = 0.005, show_top=20, use_cache=True):
@@ -59,6 +60,8 @@ def calc_potential_earn(date_range='auto', exclued_exchange=[], group_delimiter 
     df_enough_earn_rate = df_independents[df_independents['diff_ratio'] >= minimun_earn_rate].copy()
     df_enough_earn_rate.sort_values(by=['diff_ratio'], ascending=False, inplace=True)
     
+    df_enough_earn_rate['date'] = pd.to_datetime(df_enough_earn_rate['timestamp'], unit='s')
+    df_enough_earn_rate.date = df_enough_earn_rate.date.dt.tz_localize('UTC').dt.tz_convert(timezone)
     print(df_enough_earn_rate.head(n=show_top))
     print(f"Opportunity count: {df_enough_earn_rate.shape[0]}")
     df_enough_earn_rate.to_csv(get_output_fn(oldest, latest), index=False)
@@ -172,7 +175,7 @@ def get_output_fn(start_date=None, end_date=None, path=default_output_dir):
 def main():
     print_version()
     use_cache=True
-    use_cache=False
+    # use_cache=False
     minimum_earn_rate = 0.001
     exclued_exchange = ['bitflyer']
 
