@@ -126,7 +126,7 @@ def load_data(date_range='auto', use_cache=True):
                 raise TypeError("Date range need to be datetime type.")
             sql = f"SELECT * FROM orderbook WHERE timestamp>={start_ts} and timestamp<={end_ts};"
 
-        # print(sql)
+        print(sql)
         with get_db_manager() as db:
             start = time.time()
             df = pd.read_sql_query(sql=sql, con=db.conn)
@@ -144,16 +144,16 @@ def load_data(date_range='auto', use_cache=True):
 
 def get_latest_date(path=default_output_dir):
     try:
-        with open(os.path.join(path, last_db_access_file), 'rb') as f:
-            last_access_date = pickle.load(f)
-    except FileNotFoundError:
+        with open(os.path.join(path, last_db_access_file), 'r') as f:
+            last_access_date = datetime.datetime.fromisoformat(f.read())
+    except (FileNotFoundError, ValueError):
         return None
     return last_access_date
 
 
 def save_latest_date(last_access_date, path=default_output_dir):
-    with open(os.path.join(path, last_db_access_file), 'wb') as f:
-        pickle.dump(last_access_date, f)
+    with open(os.path.join(path, last_db_access_file), 'w') as f:
+        f.write(last_access_date.isoformat())
 
 
 def get_output_fn(start_date=None, end_date=None, path=default_output_dir):
@@ -178,8 +178,10 @@ def main():
     # use_cache=False
     minimum_earn_rate = 0.001
     exclued_exchange = ['bitflyer']
+    # date_range = 'all'
+    date_range = 'auto'
 
-    calc_potential_earn(minimun_earn_rate=minimum_earn_rate, use_cache=use_cache, exclued_exchange=exclued_exchange)
+    calc_potential_earn(date_range=date_range, minimun_earn_rate=minimum_earn_rate, use_cache=use_cache, exclued_exchange=exclued_exchange)
 
 
 if __name__ == '__main__':
