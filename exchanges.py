@@ -226,6 +226,13 @@ class Quoine(ParseLayerBase):
             cls.load_symbol_map()
 
 
+class Zaif(ParseLayerBase):
+    name = 'zaif'
+    url = 'https://api.zaif.jp/api/1/depth/{0}'
+    price_pos = 0
+    amount_pos = 1
+    
+
 def get_quoine_products():
     Quoine.load_symbol_map()
 
@@ -235,7 +242,8 @@ def single_test():
     async def runner():
 
         # e = Bitbank()
-        e = Quoine()
+        # e = Quoine()
+        e = Zaif()
         async with aiohttp.ClientSession() as session:
             res = await e.get_latest_orderbook(session=session)
             print(res)

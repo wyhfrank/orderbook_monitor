@@ -43,6 +43,7 @@ def construct_exchanges():
         Coincheck, 
         BITPoint, 
         Quoine,
+        Zaif,
         ]
 
     exchanges = []
