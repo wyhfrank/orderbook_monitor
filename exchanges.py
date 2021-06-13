@@ -1,5 +1,6 @@
 import asyncio
 import json
+from re import S
 import aiohttp
 import aiohttp.client_exceptions
 
@@ -233,6 +234,21 @@ class Zaif(ParseLayerBase):
     amount_pos = 1
     
 
+class Huobi(ParseLayerBase):
+    name = 'huobi'
+    url = 'https://api-cloud.huobi.co.jp/market/depth?symbol={0}&type=step0'
+    price_pos = 0
+    amount_pos = 1
+    
+    @classmethod
+    def symbol_map(cls, symbol):
+        return symbol.replace('_', '')
+
+    @classmethod
+    def preprocess_data(cls, data):
+        return data["tick"]
+
+
 def get_quoine_products():
     Quoine.load_symbol_map()
 
@@ -243,12 +259,14 @@ def single_test():
 
         # e = Bitbank()
         # e = Quoine()
-        e = Zaif()
+        # e = Zaif()
+        e = Huobi()
         async with aiohttp.ClientSession() as session:
             res = await e.get_latest_orderbook(session=session)
             print(res)
 
     asyncio.run(runner())
+
 
 if __name__ == "__main__":
     # get_quoine_products()
