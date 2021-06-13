@@ -26,23 +26,14 @@ def calc_potential_earn(date_range='auto', exclued_exchange=[], group_delimiter 
     print(f"Number of records: {df.shape[0]:d}")
     print(df.tail(5))
 
-    # Exclude exchange
-    if exclued_exchange:
-        df = df[~df['exchange'].isin(exclued_exchange)].copy()
     
-    # Group by symbol and timestamp
-    # https://stackoverflow.com/a/30244979/1938012
-    grouped = df.groupby(['symbol', 'timestamp'], sort=False)
-
-    # Find the exchange (sell_to) that has the highest bid within the group
-    # https://stackoverflow.com/a/32459442
-    sell_to = df.loc[grouped['best_bid'].idxmax()].rename(columns={'exchange':'sell_to', 'best_bid': 'sell_price'})
-    sell_to = sell_to[['symbol', 'timestamp', 'sell_to', 'sell_price']]
-
-    # Join the sell_to side to the original dataframe
-    df = df.merge(sell_to)
-    # Rename the exchange with low ask price to buy_from
-    df = df.rename(columns={'exchange':'buy_from', 'best_ask': 'buy_price'})
+    if not sell_to_calculated(df):
+        # Exclude exchange
+        if exclued_exchange:
+            df = df[~df['exchange'].isin(exclued_exchange)].copy()
+        df = calc_sell_to(df)
+        # Since this calculation is time-consuming, we cache the data
+        df.to_pickle(pickle_cache_file)
 
     # Calculate the price diff and remove those without any potential profit
     df['price_diff'] = df['sell_price'] - df['buy_price']
@@ -61,17 +52,43 @@ def calc_potential_earn(date_range='auto', exclued_exchange=[], group_delimiter 
     # If two consecutive records are larger than this time interval (in seconds), 
     #  they are treated as seperate opportunity
     df_independents = df_highest_diff_in_group.groupby(['symbol'], sort=False).apply(lambda gdf: 
-        gdf.groupby(((gdf.timestamp  - gdf.timestamp.shift(1)) > group_delimiter).cumsum())
+        gdf.groupby(((gdf.timestamp  - gdf.timestamp.shift(1)).rename('time_group') > group_delimiter).cumsum())
         .first()).droplevel([0])
     # df_independents.sort_values(by='diff_ratio', ascending=False, inplace=True)
 
-    df_engouth_earn_rate = df_independents[df_independents['diff_ratio'] >= minimun_earn_rate].copy()
-    df_engouth_earn_rate.sort_values(by=['diff_ratio'], ascending=False, inplace=True)
+    df_enough_earn_rate = df_independents[df_independents['diff_ratio'] >= minimun_earn_rate].copy()
+    df_enough_earn_rate.sort_values(by=['diff_ratio'], ascending=False, inplace=True)
     
-    print(df_engouth_earn_rate.head(n=show_top))
-    df_engouth_earn_rate.to_csv(get_output_fn(oldest, latest), index=False)
+    print(df_enough_earn_rate.head(n=show_top))
+    print(f"Opportunity count: {df_enough_earn_rate.shape[0]}")
+    df_enough_earn_rate.to_csv(get_output_fn(oldest, latest), index=False)
 
-    return df_engouth_earn_rate
+    return df_enough_earn_rate
+
+
+def sell_to_calculated(df):
+    return 'sell_to' in df.columns
+
+
+def calc_sell_to(df):
+    start = time.time()
+    # Group by symbol and timestamp
+    # https://stackoverflow.com/a/30244979/1938012
+    grouped = df.groupby(['symbol', 'timestamp'], sort=False)
+
+    # Find the exchange (sell_to) that has the highest bid within the group
+    # https://stackoverflow.com/a/32459442
+    sell_to = df.loc[grouped['best_bid'].idxmax()].rename(columns={'exchange':'sell_to', 'best_bid': 'sell_price'})
+    sell_to = sell_to[['symbol', 'timestamp', 'sell_to', 'sell_price']]
+
+    # Join the sell_to side to the original dataframe
+    df = df.merge(sell_to)
+    # Rename the exchange with low ask price to buy_from
+    df = df.rename(columns={'exchange':'buy_from', 'best_ask': 'buy_price'})
+
+    elsapsed = time.time() - start
+    print(f"Calculate sell_to took: {elsapsed:.3f}s")    
+    return df
 
 
 def load_data(date_range='auto', use_cache=True):
@@ -156,9 +173,10 @@ def main():
     print_version()
     use_cache=True
     use_cache=False
+    minimum_earn_rate = 0.001
     exclued_exchange = ['bitflyer']
 
-    calc_potential_earn(use_cache=use_cache, exclued_exchange=exclued_exchange)
+    calc_potential_earn(minimun_earn_rate=minimum_earn_rate, use_cache=use_cache, exclued_exchange=exclued_exchange)
 
 
 if __name__ == '__main__':
