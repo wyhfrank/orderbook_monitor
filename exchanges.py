@@ -51,7 +51,7 @@ class ExchangeBase:
             print("Cannot connect to {}".format(self.get_url()))
             self.setup_retry()
             return None
-        except (aiohttp.ContentTypeError, aiohttp.client_exceptions.ClientPayloadError) as e:
+        except (aiohttp.ContentTypeError, aiohttp.client_exceptions.ClientPayloadError, json.decoder.JSONDecodeError) as e:
             print("Cannot parse content from {}".format(self.get_url()))
             self.setup_retry()
             return None
